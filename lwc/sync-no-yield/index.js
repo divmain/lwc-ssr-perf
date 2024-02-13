@@ -7,12 +7,12 @@ function serverSideRenderComponent(tagName, compiledGenerateMarkup, props) {
   return markup;
 }
 
-module.exports = () => serverSideRenderComponent(
+module.exports = (remaining) => serverSideRenderComponent(
   compiledModule.tagName,
   compiledModule.generateMarkup,
-  { remaining: 10 },
+  { remaining },
 );
 
 if (require.main === module) {
-  module.exports();
+  module.exports(20);
 }

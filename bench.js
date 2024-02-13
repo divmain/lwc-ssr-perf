@@ -6,6 +6,13 @@ require('./lwc/sync-no-yield');
 require('./lwc/async-no-yield');
 
 
+// This number represents the complexity of the component tree that's generated.
+// Reduce this number for smaller outputs & faster completion times. Increase this
+// number for the opposite effect. Increasing too high will result in a stack
+// overflow.
+const SIZE = 20;
+
+
 function transformTable(rows) {
   const worstOpsPerSec = rows.reduce((memo, row) => {
     const opsPerSec = row['ops/sec'] = Number.parseInt(row['ops/sec'].replace(/,/g, ''));
@@ -35,7 +42,7 @@ function transformTable(rows) {
 
 async function benchmark(withColdCache) {
   const bench = new Bench({
-    time: 2500,
+    time: 5000,
     setup: withColdCache ? () => {
       for (const key of Object.keys(require.cache)) {
         delete require.cache[key];
@@ -45,19 +52,19 @@ async function benchmark(withColdCache) {
 
   bench
     .add('lwc/engine-server', async () => {
-      await require('./lwc/engine-server')();
+      await require('./lwc/engine-server')(SIZE);
     })
     .add('lwc/async-yield', async () => {
-      await require('./lwc/async-yield')();
+      await require('./lwc/async-yield')(SIZE);
     })
     .add('lwc/sync-yield', async () => {
-      await require('./lwc/sync-yield')();
+      await require('./lwc/sync-yield')(SIZE);
     })
     .add('lwc/sync-no-yield', async () => {
-      await require('./lwc/sync-no-yield')();
+      await require('./lwc/sync-no-yield')(SIZE);
     })
     .add('lwc/async-no-yield', async () => {
-      await require('./lwc/async-no-yield')();
+      await require('./lwc/async-no-yield')(SIZE);
     });
 
   await bench.run();

@@ -10,12 +10,12 @@ async function serverSideRenderComponent(tagName, compiledGenerateMarkup, props)
   return markup;
 }
 
-module.exports = async () => serverSideRenderComponent(
+module.exports = async (remaining) => serverSideRenderComponent(
   compiledModule.tagName,
   compiledModule.generateMarkup,
-  { remaining: 10 },
+  { remaining },
 );
 
 if (require.main === module) {
-  module.exports().catch(console.error);
+  module.exports(20).catch(console.error);
 }
