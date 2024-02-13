@@ -3,6 +3,7 @@ const testEngineServer = require('./test-engine-server');
 const testExperimental = require('./test-experimental');
 const testExperimentalSync = require('./test-experimental-sync');
 const testExperimentalSyncNoYield = require('./test-experimental-sync-no-yield');
+const testExperimentalSyncNoYieldAsync = require('./test-experimental-async-no-yield');
 
 
 (async () => {
@@ -22,6 +23,9 @@ const testExperimentalSyncNoYield = require('./test-experimental-sync-no-yield')
     })
     .add('experimental SSR (sync, no yield)', async () => {
       await testExperimentalSyncNoYield();
+    })
+    .add('experimental SSR (async, no yield)', async () => {
+      await testExperimentalSyncNoYieldAsync();
     });
 
   await bench.run();
@@ -49,6 +53,9 @@ const testExperimentalSyncNoYield = require('./test-experimental-sync-no-yield')
     })
     .add('experimental SSR (sync, no yield)(cold)', async () => {
       await require('./test-experimental-sync-no-yield')();
+    })
+    .add('experimental SSR (async, no yield)(cold)', async () => {
+      await require('./test-experimental-async-no-yield')();
     });
 
   await coldBench.run();
