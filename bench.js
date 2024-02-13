@@ -6,6 +6,7 @@ require('./lwc/async-yield');
 require('./lwc/sync-yield');
 require('./lwc/sync-no-yield');
 require('./lwc/async-no-yield');
+require('./react');
 
 
 // This number represents the complexity of the component tree that's generated.
@@ -65,6 +66,9 @@ async function benchmark(withColdCache) {
     })
     .add('lwc/async-no-yield', async () => {
       await require('./lwc/async-no-yield')(SIZE);
+    })
+    .add('react', async () => {
+      await require('./react')(SIZE);
     });
 
   await bench.run();
@@ -123,6 +127,9 @@ async function workerBenchmark() {
     })
     .add('lwc/sync-no-yield', async () => {
       await spinUpWorker('./lwc/sync-no-yield');
+    })
+    .add('react', async () => {
+      await spinUpWorker('./react');
     });
 
   await bench.run();
