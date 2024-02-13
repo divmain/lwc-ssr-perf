@@ -1,3 +1,5 @@
+const { Worker } = require('node:worker_threads');
+const path = require('node:path');
 const { Bench } = require('tinybench');
 require('./lwc/engine-server');
 require('./lwc/async-yield');
@@ -18,8 +20,6 @@ function transformTable(rows) {
     const opsPerSec = row['ops/sec'] = Number.parseInt(row['ops/sec'].replace(/,/g, ''));
     return opsPerSec < memo ? opsPerSec : memo
   }, Infinity);
-
-  console.log('worstOpsPerSec', worstOpsPerSec);
 
   return rows.reduce((memo, row) => {
     const {
@@ -77,10 +77,70 @@ async function benchmark(withColdCache) {
   });
 }
 
+async function spinUpWorker(modulePath) {
+  const absModulePath = path.resolve(__dirname, modulePath);
+  const worker = new Worker(absModulePath, {
+    workerData: {
+      size: SIZE,
+    },
+  });
+  return new Promise((resolve, reject) => {
+    worker.on('message', (result) => {
+      if (result === 'ok') {
+        resolve('ok');
+      } else {
+        reject(data);
+      }
+    });
+    worker.on('error', (err) => {
+      reject(err.stack);
+    });
+  })
+}
+
+async function workerBenchmark() {
+  const bench = new Bench({
+    time: 2500,
+    setup: () => {
+      for (const key of Object.keys(require.cache)) {
+        delete require.cache[key];
+      }
+    },
+  });
+
+  bench
+    .add('lwc/engine-server', async () => {
+      await spinUpWorker('./lwc/engine-server');
+    })
+    .add('lwc/async-yield', async () => {
+      await spinUpWorker('./lwc/async-yield');
+    })
+    .add('lwc/sync-yield', async () => {
+      await spinUpWorker('./lwc/sync-yield');
+    })
+    .add('lwc/async-no-yield', async () => {
+      await spinUpWorker('./lwc/async-no-yield');
+    })
+    .add('lwc/sync-no-yield', async () => {
+      await spinUpWorker('./lwc/sync-no-yield');
+    });
+
+  await bench.run();
+
+
+  return bench.table().map((entry) => {
+    entry['Task Name'] = entry['Task Name'] + ' (worker)';
+    return entry;
+  });
+}
+
 (async () => {
   const warmResults = await benchmark(false);
   console.table(transformTable(warmResults));
 
   const coldResults = await benchmark(true);
   console.table(transformTable(coldResults));
+
+  const workerResults = await workerBenchmark();
+  console.table(transformTable(workerResults));
 })().catch(console.error);

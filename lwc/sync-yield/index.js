@@ -1,3 +1,4 @@
+const { isMainThread, workerData, parentPort } = require('node:worker_threads');
 const compiledModule = require('./compiled');
 
 function serverSideRenderComponent(tagName, compiledGenerateMarkup, props) {
@@ -16,6 +17,13 @@ module.exports = (remaining) => serverSideRenderComponent(
   { remaining },
 );
 
-if (require.main === module) {
+if (!isMainThread) {
+  (async function () {
+    await module.exports(workerData.size);
+  })().then(
+    () => parentPort.postMessage('ok'),
+    (err) => parentPort.postMessage(err.stack),
+  );
+} else if (require.main === module) {
   module.exports(20);
 }
