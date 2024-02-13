@@ -13,7 +13,7 @@ async function serverSideRenderComponent(tagName, compiledGenerateMarkup, props)
 module.exports = async () => serverSideRenderComponent(
   compiledModule.tagName,
   compiledModule.generateMarkup,
-  {},
+  { remaining: 10 },
 );
 
 if (require.main === module) {

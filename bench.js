@@ -6,10 +6,36 @@ require('./lwc/sync-no-yield');
 require('./lwc/async-no-yield');
 
 
+function transformTable(rows) {
+  const worstOpsPerSec = rows.reduce((memo, row) => {
+    const opsPerSec = row['ops/sec'] = Number.parseInt(row['ops/sec'].replace(/,/g, ''));
+    return opsPerSec < memo ? opsPerSec : memo
+  }, Infinity);
+
+  console.log('worstOpsPerSec', worstOpsPerSec);
+
+  return rows.reduce((memo, row) => {
+    const {
+      ['Task Name']: taskName,
+      ['ops/sec']: opsPerSec,
+      ['Average Time (ns)']: avgTimeNs,
+      ['Margin']: margin,
+    } = row;
+
+    memo[taskName] = {
+      ['ops/sec']: opsPerSec,
+      ['avg time (ns)']: avgTimeNs | 0,
+      margin,
+      ['throughput']: `${((10 * opsPerSec / worstOpsPerSec) | 0) / 10}x`,
+    };
+
+    return memo;
+  }, {});
+}
+
 async function benchmark(withColdCache) {
   const bench = new Bench({
-    time: withColdCache ? 2000 : 1000,
-    // time: withColdCache ? 10000 : 5000,
+    time: 2500,
     setup: withColdCache ? () => {
       for (const key of Object.keys(require.cache)) {
         delete require.cache[key];
@@ -18,19 +44,19 @@ async function benchmark(withColdCache) {
   });
 
   bench
-    .add('@lwc/engine-server', async () => {
+    .add('lwc/engine-server', async () => {
       await require('./lwc/engine-server')();
     })
-    .add('experimental SSR (async)', async () => {
+    .add('lwc/async-yield', async () => {
       await require('./lwc/async-yield')();
     })
-    .add('experimental SSR (sync)', async () => {
+    .add('lwc/sync-yield', async () => {
       await require('./lwc/sync-yield')();
     })
-    .add('experimental SSR (sync, no yield)', async () => {
+    .add('lwc/sync-no-yield', async () => {
       await require('./lwc/sync-no-yield')();
     })
-    .add('experimental SSR (async, no yield)', async () => {
+    .add('lwc/async-no-yield', async () => {
       await require('./lwc/async-no-yield')();
     });
 
@@ -38,7 +64,7 @@ async function benchmark(withColdCache) {
 
   return bench.table().map((entry) => {
     if (withColdCache) {
-      entry['Task Name'] = entry['Task Name'] + '(cold)';
+      entry['Task Name'] = entry['Task Name'] + ' (cold)';
     }
     return entry;
   });
@@ -46,8 +72,8 @@ async function benchmark(withColdCache) {
 
 (async () => {
   const warmResults = await benchmark(false);
-  console.table(warmResults);
+  console.table(transformTable(warmResults));
 
   const coldResults = await benchmark(true);
-  console.table(coldResults);
+  console.table(transformTable(coldResults));
 })().catch(console.error);

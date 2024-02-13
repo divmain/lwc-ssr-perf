@@ -10,7 +10,7 @@ function serverSideRenderComponent(tagName, compiledGenerateMarkup, props) {
 module.exports = () => serverSideRenderComponent(
   compiledModule.tagName,
   compiledModule.generateMarkup,
-  {},
+  { remaining: 10 },
 );
 
 if (require.main === module) {
