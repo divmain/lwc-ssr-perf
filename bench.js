@@ -1,64 +1,53 @@
 const { Bench } = require('tinybench');
-const testEngineServer = require('./lwc/engine-server');
-const testExperimental = require('./lwc/async-yield');
-const testExperimentalSync = require('./lwc/sync-yield');
-const testExperimentalSyncNoYield = require('./lwc/sync-no-yield');
-const testExperimentalSyncNoYieldAsync = require('./lwc/async-no-yield');
+require('./lwc/engine-server');
+require('./lwc/async-yield');
+require('./lwc/sync-yield');
+require('./lwc/sync-no-yield');
+require('./lwc/async-no-yield');
 
 
-(async () => {
+async function benchmark(withColdCache) {
   const bench = new Bench({
-    time: 5000,
+    time: withColdCache ? 2000 : 1000,
+    // time: withColdCache ? 10000 : 5000,
+    setup: withColdCache ? () => {
+      for (const key of Object.keys(require.cache)) {
+        delete require.cache[key];
+      }
+    } : undefined,
   });
 
   bench
     .add('@lwc/engine-server', async () => {
-      await testEngineServer();
+      await require('./lwc/engine-server')();
     })
     .add('experimental SSR (async)', async () => {
-      await testExperimental();
+      await require('./lwc/async-yield')();
     })
     .add('experimental SSR (sync)', async () => {
-      await testExperimentalSync();
+      await require('./lwc/sync-yield')();
     })
     .add('experimental SSR (sync, no yield)', async () => {
-      await testExperimentalSyncNoYield();
+      await require('./lwc/sync-no-yield')();
     })
     .add('experimental SSR (async, no yield)', async () => {
-      await testExperimentalSyncNoYieldAsync();
+      await require('./lwc/async-no-yield')();
     });
 
   await bench.run();
 
-  console.table(bench.table());
-
-  const coldBench = new Bench({
-    time: 10000,
-    setup: () => {
-      for (const key of Object.keys(require.cache)) {
-        delete require.cache[key];
-      }
+  return bench.table().map((entry) => {
+    if (withColdCache) {
+      entry['Task Name'] = entry['Task Name'] + '(cold)';
     }
+    return entry;
   });
+}
 
-  coldBench
-    .add('@lwc/engine-server (cold)', async () => {
-      await require('./lwc/engine-server')();
-    })
-    .add('experimental SSR (async)(cold)', async () => {
-      await require('./lwc/async-yield')();
-    })
-    .add('experimental SSR (sync)(cold)', async () => {
-      await require('./lwc/sync-yield')();
-    })
-    .add('experimental SSR (sync, no yield)(cold)', async () => {
-      await require('./lwc/sync-no-yield')();
-    })
-    .add('experimental SSR (async, no yield)(cold)', async () => {
-      await require('./lwc/async-no-yield')();
-    });
+(async () => {
+  const warmResults = await benchmark(false);
+  console.table(warmResults);
 
-  await coldBench.run();
-
-  console.table(coldBench.table());
+  const coldResults = await benchmark(true);
+  console.table(coldResults);
 })().catch(console.error);
