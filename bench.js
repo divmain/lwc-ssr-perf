@@ -1,9 +1,9 @@
 const { Bench } = require('tinybench');
-const testEngineServer = require('./test-engine-server');
-const testExperimental = require('./test-experimental');
-const testExperimentalSync = require('./test-experimental-sync');
-const testExperimentalSyncNoYield = require('./test-experimental-sync-no-yield');
-const testExperimentalSyncNoYieldAsync = require('./test-experimental-async-no-yield');
+const testEngineServer = require('./lwc/engine-server');
+const testExperimental = require('./lwc/async-yield');
+const testExperimentalSync = require('./lwc/sync-yield');
+const testExperimentalSyncNoYield = require('./lwc/sync-no-yield');
+const testExperimentalSyncNoYieldAsync = require('./lwc/async-no-yield');
 
 
 (async () => {
@@ -43,19 +43,19 @@ const testExperimentalSyncNoYieldAsync = require('./test-experimental-async-no-y
 
   coldBench
     .add('@lwc/engine-server (cold)', async () => {
-      await require('./test-engine-server')();
+      await require('./lwc/engine-server')();
     })
     .add('experimental SSR (async)(cold)', async () => {
-      await require('./test-experimental')();
+      await require('./lwc/async-yield')();
     })
     .add('experimental SSR (sync)(cold)', async () => {
-      await require('./test-experimental-sync')();
+      await require('./lwc/sync-yield')();
     })
     .add('experimental SSR (sync, no yield)(cold)', async () => {
-      await require('./test-experimental-sync-no-yield')();
+      await require('./lwc/sync-no-yield')();
     })
     .add('experimental SSR (async, no yield)(cold)', async () => {
-      await require('./test-experimental-async-no-yield')();
+      await require('./lwc/async-no-yield')();
     });
 
   await coldBench.run();

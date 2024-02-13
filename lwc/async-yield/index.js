@@ -1,13 +1,16 @@
-const compiledModule = require('./compiled-experimental-ssr-no-yield-async');
+const compiledModule = require('./compiled');
 
 async function serverSideRenderComponent(tagName, compiledGenerateMarkup, props) {
   let markup = '';
-  const emit = (segment) => markup += segment;
-  await compiledGenerateMarkup(emit, tagName, props, null, null);
+
+  for await (const segment of compiledGenerateMarkup(tagName, props, null, null)) {
+    markup += segment;
+  }
+
   return markup;
 }
 
-module.exports = () => serverSideRenderComponent(
+module.exports = async () => serverSideRenderComponent(
   compiledModule.tagName,
   compiledModule.generateMarkup,
   {},

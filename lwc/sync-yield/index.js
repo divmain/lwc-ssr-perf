@@ -1,9 +1,12 @@
-const compiledModule = require('./compiled-experimental-ssr-no-yield');
+const compiledModule = require('./compiled');
 
 function serverSideRenderComponent(tagName, compiledGenerateMarkup, props) {
   let markup = '';
-  const emit = (segment) => markup += segment;
-  compiledGenerateMarkup(emit, tagName, props, null, null);
+
+  for (const segment of compiledGenerateMarkup(tagName, props, null, null)) {
+    markup += segment;
+  }
+
   return markup;
 }
 

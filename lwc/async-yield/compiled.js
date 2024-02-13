@@ -2,28 +2,28 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var runtime = require('./experimental-ssr-runtime-no-yield');
+var runtime = require('../runtime-yield');
 
 var defaultStylesheets = undefined;
 
-function tmpl(emit, props, attrs, slotted, Cmp, instance, stylesheets) {
+async function* tmpl(props, attrs, slotted, Cmp, instance, stylesheets) {
   if (Cmp.renderMode !== 'light') {
-    emit(`<template shadowroot="open"${Cmp.delegatesFocus ? ' shadowrootdelegatesfocus' : ''}>`);
+    yield `<template shadowroot="open"${Cmp.delegatesFocus ? ' shadowrootdelegatesfocus' : ''}>`;
   }
   for (const stylesheet of stylesheets ?? []) {
     const token = null;
     const useActualHostSelector = true;
     const useNativeDirPseudoclass = null;
-    emit('<style type="text/css">');
-    stylesheet(emit, token, useActualHostSelector, useNativeDirPseudoclass);
-    emit('</style>');
+    yield '<style type="text/css">';
+    yield stylesheet(token, useActualHostSelector, useNativeDirPseudoclass);
+    yield '</style>';
   }
-  emit("<div>");
+  yield "<div>";
   if (instance.isPositive) {
     if (instance.isDivisibleByThree) {
       for (let [__unused__, child] of Object.entries(instance.someChildren ?? ({}))) {
-        emit("<span");
-        emit(">");
+        yield "<span";
+        yield ">";
         {
           const childProps = {
             label: child,
@@ -31,26 +31,26 @@ function tmpl(emit, props, attrs, slotted, Cmp, instance, stylesheets) {
           };
           const childAttrs = {};
           const childSlottedContentGenerators = {};
-          generateMarkup(emit, "x-component", childProps, childAttrs, childSlottedContentGenerators);
+          yield* generateMarkup("x-component", childProps, childAttrs, childSlottedContentGenerators);
         }
-        emit("</span>");
+        yield "</span>";
       }
     } else if (instance.isDivisibleByTwo) {
-      emit("<div");
-      emit(">");
-      emit("<span");
-      emit(">");
-      emit("two");
-      emit("</span>");
+      yield "<div";
+      yield ">";
+      yield "<span";
+      yield ">";
+      yield "two";
+      yield "</span>";
       {
         const childProps = {
           remaining: instance.minusOne
         };
         const childAttrs = {};
         const childSlottedContentGenerators = {};
-        generateMarkup(emit, "x-component", childProps, childAttrs, childSlottedContentGenerators);
+        yield* generateMarkup("x-component", childProps, childAttrs, childSlottedContentGenerators);
       }
-      emit("</div>");
+      yield "</div>";
     } else {
       {
         const childProps = {
@@ -58,15 +58,15 @@ function tmpl(emit, props, attrs, slotted, Cmp, instance, stylesheets) {
         };
         const childAttrs = {};
         const childSlottedContentGenerators = {};
-        generateMarkup(emit, "x-component", childProps, childAttrs, childSlottedContentGenerators);
+        yield* generateMarkup("x-component", childProps, childAttrs, childSlottedContentGenerators);
       }
     }
   } else {
-    emit("terminal node");
+    yield "terminal node";
   }
-  emit("</div>");
+  yield "</div>";
   if (Cmp.renderMode !== 'light') {
-    emit('</template>');
+    yield '</template>';
   }
 }
 
@@ -90,7 +90,7 @@ class Component extends runtime.LightningElement {
   }
 }
 const __REFLECTED_PROPS__ = [];
-function generateMarkup(emit, tagName, props, attrs, slotted) {
+async function* generateMarkup(tagName, props, attrs, slotted) {
   attrs = attrs ?? ({});
   const instance = new Component({
     tagName: tagName.toUpperCase()
@@ -98,12 +98,12 @@ function generateMarkup(emit, tagName, props, attrs, slotted) {
   instance.__internal__setState(props, __REFLECTED_PROPS__, attrs);
   instance.isConnected = true;
   instance.connectedCallback?.();
-  emit(`<${tagName}`);
-  runtime.renderAttrs(emit, attrs);
-  emit('>');
+  yield `<${tagName}`;
+  yield* runtime.renderAttrs(attrs);
+  yield '>';
   const tmplFn = tmpl ?? runtime.fallbackTmpl;
-  tmplFn(emit, props, attrs, slotted, Component, instance, defaultStylesheets);
-  emit(`</${tagName}>`);
+  yield* tmplFn(props, attrs, slotted, Component, instance, defaultStylesheets);
+  yield `</${tagName}>`;
 }
 
 const tagName = 'x-component';

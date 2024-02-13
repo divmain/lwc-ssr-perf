@@ -1,16 +1,13 @@
-const compiledModule = require('./compiled-experimental-ssr');
+const compiledModule = require('./compiled');
 
 async function serverSideRenderComponent(tagName, compiledGenerateMarkup, props) {
   let markup = '';
-
-  for await (const segment of compiledGenerateMarkup(tagName, props, null, null)) {
-    markup += segment;
-  }
-
+  const emit = (segment) => markup += segment;
+  await compiledGenerateMarkup(emit, tagName, props, null, null);
   return markup;
 }
 
-module.exports = async () => serverSideRenderComponent(
+module.exports = () => serverSideRenderComponent(
   compiledModule.tagName,
   compiledModule.generateMarkup,
   {},
