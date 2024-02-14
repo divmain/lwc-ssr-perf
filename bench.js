@@ -13,11 +13,11 @@ require('./react');
 // Reduce this number for smaller outputs & faster completion times. Increase this
 // number for the opposite effect. Increasing too high will result in a stack
 // overflow.
-// const SIZE = 20;
+const SIZE = 20;
 
 // Alternately, you can do multiple runs of all benchmarks, each run with a
 // different complexity.
-const SIZE = [2, 5, 8, 11, 14, 17, 20, 23];
+// const SIZE = [2, 5, 8, 11, 14, 17, 20, 23];
 
 
 const gcPause = () => {
@@ -102,7 +102,7 @@ async function spinUpWorker(modulePath, size) {
       if (result === 'ok') {
         resolve('ok');
       } else {
-        reject(data);
+        reject(result);
       }
     });
     worker.on('error', (err) => {
@@ -142,7 +142,6 @@ async function workerBenchmark(size) {
     });
 
   await bench.run();
-
 
   return bench.table().map((entry) => {
     entry['Task Name'] = entry['Task Name'] + ' (worker)';
