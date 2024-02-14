@@ -13,8 +13,17 @@ require('./react');
 // Reduce this number for smaller outputs & faster completion times. Increase this
 // number for the opposite effect. Increasing too high will result in a stack
 // overflow.
-const SIZE = 20;
+// const SIZE = 20;
 
+// Alternately, you can do multiple runs of all benchmarks, each run with a
+// different complexity.
+const SIZE = [2, 5, 8, 11, 14, 17, 20, 23];
+
+
+const gcPause = () => {
+  gc(true);
+  return new Promise(resolve => setTimeout(resolve, 1000));
+};
 
 function transformTable(rows) {
   const worstOpsPerSec = rows.reduce((memo, row) => {
@@ -41,7 +50,7 @@ function transformTable(rows) {
   }, {});
 }
 
-async function benchmark(withColdCache) {
+async function benchmark(withColdCache, size) {
   const bench = new Bench({
     time: 5000,
     setup: withColdCache ? () => {
@@ -53,22 +62,22 @@ async function benchmark(withColdCache) {
 
   bench
     .add('lwc/engine-server', async () => {
-      await require('./lwc/engine-server')(SIZE);
+      await require('./lwc/engine-server')(size);
     })
     .add('lwc/async-yield', async () => {
-      await require('./lwc/async-yield')(SIZE);
+      await require('./lwc/async-yield')(size);
     })
     .add('lwc/sync-yield', async () => {
-      await require('./lwc/sync-yield')(SIZE);
+      await require('./lwc/sync-yield')(size);
     })
     .add('lwc/sync-no-yield', async () => {
-      await require('./lwc/sync-no-yield')(SIZE);
+      await require('./lwc/sync-no-yield')(size);
     })
     .add('lwc/async-no-yield', async () => {
-      await require('./lwc/async-no-yield')(SIZE);
+      await require('./lwc/async-no-yield')(size);
     })
     .add('react', async () => {
-      await require('./react')(SIZE);
+      await require('./react')(size);
     });
 
   await bench.run();
@@ -81,11 +90,11 @@ async function benchmark(withColdCache) {
   });
 }
 
-async function spinUpWorker(modulePath) {
+async function spinUpWorker(modulePath, size) {
   const absModulePath = path.resolve(__dirname, modulePath);
   const worker = new Worker(absModulePath, {
     workerData: {
-      size: SIZE,
+      size,
     },
   });
   return new Promise((resolve, reject) => {
@@ -102,7 +111,7 @@ async function spinUpWorker(modulePath) {
   })
 }
 
-async function workerBenchmark() {
+async function workerBenchmark(size) {
   const bench = new Bench({
     time: 2500,
     setup: () => {
@@ -114,22 +123,22 @@ async function workerBenchmark() {
 
   bench
     .add('lwc/engine-server', async () => {
-      await spinUpWorker('./lwc/engine-server');
+      await spinUpWorker('./lwc/engine-server', size);
     })
     .add('lwc/async-yield', async () => {
-      await spinUpWorker('./lwc/async-yield');
+      await spinUpWorker('./lwc/async-yield', size);
     })
     .add('lwc/sync-yield', async () => {
-      await spinUpWorker('./lwc/sync-yield');
-    })
-    .add('lwc/async-no-yield', async () => {
-      await spinUpWorker('./lwc/async-no-yield');
+      await spinUpWorker('./lwc/sync-yield', size);
     })
     .add('lwc/sync-no-yield', async () => {
-      await spinUpWorker('./lwc/sync-no-yield');
+      await spinUpWorker('./lwc/sync-no-yield', size);
+    })
+    .add('lwc/async-no-yield', async () => {
+      await spinUpWorker('./lwc/async-no-yield', size);
     })
     .add('react', async () => {
-      await spinUpWorker('./react');
+      await spinUpWorker('./react', size);
     });
 
   await bench.run();
@@ -141,13 +150,38 @@ async function workerBenchmark() {
   });
 }
 
-(async () => {
-  const warmResults = await benchmark(false);
+async function run(size) {
+  console.log(`=== RUNNING BENCHMARKS WITH COMPLEXITY ${size} ===`);
+  const targetOutput = await require('./lwc/engine-server')(size);
+  console.log(`markup size in bytes: ${targetOutput.length}\n`);
+
+  await gcPause();
+  const warmResults = await benchmark(false, size);
   console.table(transformTable(warmResults));
 
-  const coldResults = await benchmark(true);
+  await gcPause();
+  const coldResults = await benchmark(true, size);
   console.table(transformTable(coldResults));
 
-  const workerResults = await workerBenchmark();
+  await gcPause();
+  const workerResults = await workerBenchmark(size);
   console.table(transformTable(workerResults));
+}
+
+if (!global.gc) {
+  console.log('To get stable results, it is necessary to trigger the V8 garbage collector between runs.');
+  console.log('Please run `node --expose-gc ./bench.js`')
+  process.exit(1);
+}
+
+(async () => {
+  if (typeof SIZE === 'number') {
+    await run(SIZE);
+  } else if (typeof SIZE === 'object') {
+    for (const size of SIZE) {
+      await run(size);
+    }
+  } else {
+    console.error('Benchmark script is misconfigured: please set SIZE to a number of array of numbers.');
+  }
 })().catch(console.error);
