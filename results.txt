@@ -29,22 +29,22 @@
 │       react (worker)        │   28    │   34907185    │ '±0.07%' │    '7x'    │
 └─────────────────────────────┴─────────┴───────────────┴──────────┴────────────┘
 
-/usr/bin/time -l node ./test-engine-server.js
+/usr/bin/time -l node ./lwc/engine-server
     45400064  maximum resident set size
     20240832  peak memory footprint
-/usr/bin/time -l node ./test-experimental.js
+/usr/bin/time -l node ./lwc/async-yield
     43745280  maximum resident set size
     18436032  peak memory footprint
-/usr/bin/time -l node ./test-experimental-sync.js
+/usr/bin/time -l node ./lwc/sync-yield
     39403520  maximum resident set size
     13913216  peak memory footprint
 /usr/bin/time -l node -e 'console.log("hello world")'
     31457280  maximum resident set size
      8555648  peak memory footprint
-/usr/bin/time -l node ./test-experimental-sync-no-yield.js
+/usr/bin/time -l node ./lwc/sync-no-yield
     30998528  maximum resident set size
      8342656  peak memory footprint
-/usr/bin/time -l node ./test-experimental-async-no-yield.js
+/usr/bin/time -l node ./lwc/async-no-yield
     31490048  maximum resident set size
      8735872  peak memory footprint
 
