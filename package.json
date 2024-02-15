@@ -12,9 +12,13 @@
   "license": "ISC",
   "dependencies": {
     "@lwc/engine-server": "5.1.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
     "lwc": "5.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "rollup": "^4.10.0",
     "tinybench": "^2.5.1"
   }
 }

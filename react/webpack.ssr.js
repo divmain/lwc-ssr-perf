@@ -14,7 +14,6 @@ module.exports = {
       type: 'umd',
       export: ['default'],
     },
-    // library: 'ReactExample',
   },
   module: {
     rules: [
